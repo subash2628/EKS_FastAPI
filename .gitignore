@@ -50,3 +50,7 @@ logs/
 credentials
 *.pem
 *.key
+
+planning/
+
+claude.md
