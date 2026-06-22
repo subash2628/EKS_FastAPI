@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: fastapi-app
-          image: subash26288/fastapi-app:f002181d425ca354a5bcac0c298e1a91332fcdfa
+          image: subash26288/fastapi-app:46988b34ef058a32781632284f54ac8564291731
           ports:
             - containerPort: 8000
           envFrom:
