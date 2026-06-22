@@ -12,9 +12,15 @@ os.environ.setdefault("DB_NAME", "test")
 
 import db as db_module
 from db import Base, get_db
+import models
+from sqlalchemy.pool import StaticPool
 
 TEST_DATABASE_URL = "sqlite:///:memory:"
-test_engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+test_engine = create_engine(
+    TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 TestSessionLocal = sessionmaker(bind=test_engine)
 
 
