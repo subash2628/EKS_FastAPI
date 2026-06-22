@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Query UI</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+    form { display: flex; flex-direction: column; gap: 12px; background: #f5f5f5; padding: 20px; border-radius: 8px; }
+    label { font-weight: 600; }
+    select, input[type="text"], input[type="date"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+    button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; width: fit-content; }
+    button:hover { background: #1557b0; }
+    .section { margin-top: 12px; display: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
+    th { background: #f0f0f0; font-weight: 600; }
+    tr:hover { background: #fafafa; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; }
+    .active { background: #d4edda; color: #155724; }
+    .inactive { background: #f8d7da; color: #721c24; }
+    .empty { color: #888; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>User Query Interface</h1>
+
+  <form method="post" action="/">
+    <div>
+      <label for="filter_type">Filter type</label>
+      <select name="filter_type" id="filter_type" onchange="toggleSections(this.value)">
+        <option value="all">All users (paginated)</option>
+        <option value="status">By status</option>
+        <option value="date_range">By signup date range</option>
+        <option value="country">By country</option>
+        <option value="name_search">Search by name</option>
+      </select>
+    </div>
+
+    <div class="section" id="section-status">
+      <label for="status">Status</label>
+      <select name="status" id="status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+
+    <div class="section" id="section-date_range">
+      <label for="date_from">From</label>
+      <input type="date" name="date_from" id="date_from" />
+      <label for="date_to">To</label>
+      <input type="date" name="date_to" id="date_to" />
+    </div>
+
+    <div class="section" id="section-country">
+      <label for="country">Country</label>
+      <input type="text" name="country" id="country" placeholder="e.g. Japan" />
+    </div>
+
+    <div class="section" id="section-name_search">
+      <label for="name_search">Name contains</label>
+      <input type="text" name="name_search" id="name_search" placeholder="e.g. Alice" />
+    </div>
+
+    <div>
+      <label for="page">Page</label>
+      <input type="number" name="page" id="page" value="1" min="1" style="width:80px;" />
+    </div>
+
+    <button type="submit">Run query</button>
+  </form>
+
+  {% if query_ran %}
+    {% if results %}
+      <p>{{ results | length }} result(s) returned.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Country</th><th>Signed up</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in results %}
+          <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.name }}</td>
+            <td>{{ u.email }}</td>
+            <td><span class="badge {{ u.status }}">{{ u.status }}</span></td>
+            <td>{{ u.country }}</td>
+            <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at is not string else u.created_at[:10] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">No results for this query.</p>
+    {% endif %}
+  {% endif %}
+
+  <script>
+    const SECTIONS = ["status", "date_range", "country", "name_search"];
+    function toggleSections(val) {
+      SECTIONS.forEach(s => {
+        document.getElementById("section-" + s).style.display = val === s ? "block" : "none";
+      });
+    }
+    // Init on page load so form state is restored after POST
+    toggleSections(document.getElementById("filter_type").value);
+  </script>
+</body>
+</html>
