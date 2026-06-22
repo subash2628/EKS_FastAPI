@@ -18,13 +18,27 @@
     th { background: #f0f0f0; font-weight: 600; }
     tr:hover { background: #fafafa; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    a.add-btn { padding: 9px 18px; background: #34a853; color: white; border-radius: 4px; text-decoration: none; font-size: 0.9rem; }
+    a.add-btn:hover { background: #2d8f47; }
+    .success { background: #d4edda; color: #155724; padding: 10px 16px; border-radius: 4px; margin-bottom: 14px; font-size: 0.9rem; }
     .active { background: #d4edda; color: #155724; }
     .inactive { background: #f8d7da; color: #721c24; }
     .empty { color: #888; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>User Query Interface</h1>
+  <div class="header-row">
+    <h1>User Query Interface</h1>
+    <div style="display:flex;gap:8px;">
+      <a class="add-btn" href="/users/add">+ Add User</a>
+      <a class="add-btn" href="/sql" style="background:#6f42c1;">SQL Console</a>
+    </div>
+  </div>
+
+  {% if request.query_params.get('added') %}
+  <div class="success">User added successfully.</div>
+  {% endif %}
 
   <form method="post" action="/">
     <div>

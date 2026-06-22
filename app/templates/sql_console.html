@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SQL Console</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 40px auto; padding: 0 16px; color: #222; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    h1 { font-size: 1.4rem; margin: 0; }
+    a.back { padding: 8px 16px; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; color: #444; font-size: 0.9rem; }
+    a.back:hover { background: #f5f5f5; }
+    textarea {
+      width: 100%; box-sizing: border-box;
+      font-family: 'Courier New', monospace; font-size: 0.95rem;
+      padding: 12px; border: 1px solid #ccc; border-radius: 4px;
+      resize: vertical; min-height: 120px;
+    }
+    textarea:focus { outline: 2px solid #1a73e8; border-color: transparent; }
+    .actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
+    button { padding: 10px 24px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.95rem; }
+    button:hover { background: #1557b0; }
+    .error { background: #f8d7da; color: #721c24; padding: 10px 14px; border-radius: 4px; margin-top: 16px; font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; }
+    .info { background: #d4edda; color: #155724; padding: 10px 14px; border-radius: 4px; margin-top: 16px; font-size: 0.9rem; }
+    .results { margin-top: 20px; overflow-x: auto; }
+    .row-count { font-size: 0.85rem; color: #666; margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: #f0f0f0; font-weight: 600; text-align: left; padding: 9px 12px; border-bottom: 2px solid #ddd; white-space: nowrap; }
+    td { padding: 8px 12px; border-bottom: 1px solid #eee; word-break: break-word; }
+    tr:hover td { background: #fafafa; }
+    .null { color: #aaa; font-style: italic; }
+    .warning { background: #fff3cd; color: #856404; padding: 8px 14px; border-radius: 4px; font-size: 0.82rem; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header-row">
+    <h1>SQL Console</h1>
+    <a class="back" href="/">← Back to query UI</a>
+  </div>
+
+  <div class="warning">⚠ Raw SQL — for local development only. Do not expose this in production.</div>
+
+  <form method="post" action="/sql">
+    <textarea name="query" placeholder="SELECT * FROM users LIMIT 10;">{{ query or '' }}</textarea>
+    <div class="actions">
+      <button type="submit">Run</button>
+      <span style="font-size:0.82rem;color:#888;">Ctrl+Enter also submits</span>
+    </div>
+  </form>
+
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% elif info %}
+    <div class="info">{{ info }}</div>
+  {% elif columns is defined and columns %}
+    <div class="results">
+      <div class="row-count">{{ rows | length }} row(s) returned</div>
+      <table>
+        <thead>
+          <tr>{% for col in columns %}<th>{{ col }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            {% for cell in row %}
+            <td>{% if cell is none %}<span class="null">NULL</span>{% else %}{{ cell }}{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <script>
+    document.querySelector('textarea').addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'Enter') this.closest('form').submit();
+    });
+  </script>
+</body>
+</html>

@@ -1,13 +1,14 @@
 from contextlib import asynccontextmanager
-from datetime import datetime, date
+from datetime import datetime
 
-from fastapi import FastAPI, Depends, Request, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Depends, Request, Form, HTTPException
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from db import get_db, check_db_connection, engine, Base
+from sqlalchemy import text
 from models import User
 from schemas import UserOut, QueryParams
 import queries
@@ -93,6 +94,58 @@ def api_query(
     )
     users = _run_query(params, db)
     return {"results": [UserOut.model_validate(u).model_dump() for u in users]}
+
+
+@app.get("/users/add", response_class=HTMLResponse)
+def add_user_form(request: Request):
+    return templates.TemplateResponse("add_user.html", {"request": request})
+
+
+@app.post("/users/add")
+def add_user(
+    name: str = Form(...),
+    email: str = Form(...),
+    status: str = Form(...),
+    country: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already exists")
+    user = User(name=name, email=email, status=status, country=country, created_at=datetime.utcnow())
+    db.add(user)
+    db.commit()
+    return RedirectResponse(url="/?added=1", status_code=303)
+
+
+@app.get("/sql", response_class=HTMLResponse)
+def sql_console(request: Request):
+    return templates.TemplateResponse("sql_console.html", {"request": request})
+
+
+@app.post("/sql", response_class=HTMLResponse)
+def sql_run(request: Request, query: str = Form(...), db: Session = Depends(get_db)):
+    try:
+        result = db.execute(text(query))
+        try:
+            columns = list(result.keys())
+            rows = [list(row) for row in result.fetchall()]
+            return templates.TemplateResponse(
+                "sql_console.html",
+                {"request": request, "query": query, "columns": columns, "rows": rows, "error": None},
+            )
+        except Exception:
+            db.commit()
+            return templates.TemplateResponse(
+                "sql_console.html",
+                {"request": request, "query": query, "columns": [], "rows": [], "error": None, "info": "Query executed successfully (no rows returned)."},
+            )
+    except Exception as e:
+        db.rollback()
+        return templates.TemplateResponse(
+            "sql_console.html",
+            {"request": request, "query": query, "columns": [], "rows": [], "error": str(e)},
+        )
 
 
 def _run_query(params: QueryParams, db: Session) -> list[User]:
